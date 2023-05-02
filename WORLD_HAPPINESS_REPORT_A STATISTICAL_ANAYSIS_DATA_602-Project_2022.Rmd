@@ -1,0 +1,1109 @@
+---
+title: "602-Final Project"
+author: "Monica Chandramurthy: 30191289, Saketh Ram Mamillapalli: 30187315"
+date: "2023-02-15"
+output: html_document
+runtime: shiny
+editor_options: 
+  markdown: 
+    wrap: sentence
+---
+
+# WORLD HAPPINESS REPORT - A STATISTICAL ANAYSIS
+
+### INTRODUCTION:
+
+Happiness is a complex and subjective concept that has garnered significant interest in the fields of psychology and social science.
+The World Happiness Report offers a valuable dataset to examine the factors that impact happiness levels across different countries globally.
+This report aims to analyze the trends in happiness scores across countries over time, compare the mean happiness scores between developed vs. developing regions, and investigate the impact of economic factors on the happiness scores across countries over time.
+By analyzing this data, we seek to gain a better understanding of the drivers of happiness and how these various factors interact to create a sense of well-being.
+
+### DATA SOURCE:
+
+The original data source is <https://worldhappiness.org/data/> by United Nations Sustainable Development Solutions Network which has been stated to be open to the public for further reuse.
+This dataset has been collected and published annually by the United Nations Sustainable Development Solutions Network which ranks 156 countries by how happy their citizens perceive themselves to be.
+The report is based on data from the Gallup World Poll [<https://www.gallup.com/analytics/349487/gallup-global-happiness-center.aspx>].
+The data set was extracted from Kaggle's open data source.[<https://www.kaggle.com/datasets/mathurinache/world-happiness-report>] The Data was collected for the period between 2015-2022.
+Among which our analysis would focus only from 2016-2020, 5 csv files of 53 columns.
+
+### GUIDING QUESTION:
+
+**Question 1:** To analyze the trends in happiness scores across countries over time
+
+**Question 2:** Compare the mean happiness scores between developed vs. developing regions, and test whether the differences are statistically significant.
+
+**Question 3:** To analyze the impact of Economic factors on the happiness scores across countries over time
+
+```{r}
+# Loading the necessary libraries
+library(tidyverse)
+library(ggplot2)
+library(lubridate)
+library(skimr)
+library(dplyr)
+library(exactRankTests)
+library(prodlim)
+library(arsenal)
+library(car)
+library(janitor)
+library(tidyr)
+library(gplots)
+library(ggpubr)
+library(forcats)
+library(gridExtra)
+library(ggalt)
+library(corrgram)
+library(corrplot)
+library(plm)
+library(arsenal)
+library(mice)
+library(sf)
+library(Hmisc)
+library(patchwork)
+library(reshape2)
+library(viridis)
+library(binom)
+library(car)
+library(collapsibleTree)
+library(dbplyr)
+library(dplyr)
+library(EnvStats)
+library(ggformula)
+library(ggplot2)
+library(gmodels)
+library(htmltools)
+library(ISLR)
+library(knitr)
+library(lawstat)
+library(markdown)
+library(mosaic)
+library(modeest)
+library(mdsr)
+library(mosaicData)
+library(nycflights13)
+library(olsrr)
+library(plyr)
+library(purrr)
+library(plotly)
+library(resampledata)
+library(rmarkdown)
+library(rpart)
+library(rpart.plot)
+library(rvest)
+library(SDaA)
+library(shiny)
+library(stringi)
+library(tibble)
+library(tidyr)
+library(tidyselect)
+library(tinytex)
+library(yaml)
+library(shiny)
+library(boot)
+library(rsq)
+library(e1071)
+
+warning = FALSE
+```
+
+### DATA COLLECTION:
+
+The World Happiness Report dataset available on Kaggle provides data on the happiness levels of people in various countries around the world.
+[[https://www.kaggle.com/datasets/mathurinache/world-happiness-report](https://www.kaggle.com/datasets/mathurinache/world-happiness-report/code){.uri}].
+The dataset we are collecting contains information on 156 countries and includes data from 2016 to 2022.
+To access this dataset in R, we read the csv file read.csv() function to read in the data from the CSV file available on Kaggle.
+
+```{r}
+# Importing the data
+data_2016 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2016.csv")
+data_2017 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2017.csv")
+data_2018 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2018.csv")
+data_2019 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2019.csv")
+data_2020 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2020.csv")
+```
+
+```{r}
+# Exploring the loaded data of the year 2016
+str(data_2016)
+```
+
+```{r}
+# Exploring the loaded data of the year 2017
+str(data_2017)
+```
+
+```{r}
+# Exploring the loaded data of the year 2018
+str(data_2018)
+```
+
+```{r}
+# Exploring the loaded data of the year 2019
+str(data_2019)
+```
+
+```{r}
+# Exploring the loaded data of the year 2020
+str(data_2020)
+```
+
+### DATA CLEANING:
+
+We first compare the columns in all the datasets using compare_df_cols:
+
+```{r}
+compare_df_cols(data_2016, data_2017, data_2018, data_2019, data_2020)
+```
+
+Only in the year 2017 there is no region.
+However, in the year 2018, 2019 it is mentioned as "Country or Region" which would be replaced and renamed as Country leaving no region column in 2018 and 2019.
+
+To add a "Region" column to 2017, 2018, and 2018 dataset we will be using information from another dataset called "data_2016".
+he code matches the "Country" column in the 2017, 2018, and 2018 datasetswith the "Country" column in the "data_2016" dataset and assigns the corresponding "Region" value to the new "Region" respective column in the 2017, 2018, and 2018 dataset
+
+```{r}
+# Add the region column to the 2017 data
+data_2017$Region <- data_2016$Region[match(data_2017$Country, data_2016$Country)]
+
+# Add the region column to the 2018 data
+data_2018$Region <- data_2016$Region[match(data_2018$Country.or.region , data_2016$Country)]
+
+# Add the region column to the 2019 data
+data_2019$Region <- data_2016$Region[match(data_2019$Country.or.region , data_2016$Country)]
+
+```
+
+Renaming, removing, and adding columns are common data manipulation tasks in data analysis and is important to have a clean analysis.
+Thus renaming all the columns in the datasets
+
+```{r}
+# Renaming, removing and adding columns into the loaded dataset
+data_2016 <- data_2016 %>%
+  rename(Country = Country,
+         Region = Region,
+         Happiness_Rank = Happiness.Rank,
+         Happiness_Score = Happiness.Score,
+         Lower_Confidence_Interval = Lower.Confidence.Interval,
+         Upper_Confidence_Interval = Upper.Confidence.Interval,
+         Economy_GDP_per_Capita = Economy..GDP.per.Capita.,
+         Family = Family,
+         Health_Life_Expectancy = Health..Life.Expectancy.,
+         Freedom = Freedom,
+         Trust_Government_Corruption = Trust..Government.Corruption.,
+         Generosity_d = Generosity,
+         Dystopia_Residual = Dystopia.Residual)%>%
+  add_column('Year' = 2016)
+
+data_2017 <- data_2017 %>%
+  rename(Country = "Country",
+         Happiness_Rank = Happiness.Rank,
+         Happiness_Score = Happiness.Score,
+         Lower_Confidence_Interval = Whisker.low,
+         Upper_Confidence_Interval = Whisker.high,
+         Economy_GDP_per_Capita = Economy..GDP.per.Capita.,
+         Family = Family,
+         Health_Life_Expectancy = Health..Life.Expectancy.,
+         Freedom = Freedom,
+         Trust_Government_Corruption = Trust..Government.Corruption.,
+         Generosity_d = Generosity,
+         Dystopia_Residual = Dystopia.Residual)%>%
+  add_column('Year' = 2017)
+
+data_2018 <- data_2018 %>%
+  rename(Country = Country.or.region,
+         Happiness_Rank = Overall.rank,
+         Happiness_Score = Score,
+         Economy_GDP_per_Capita = GDP.per.capita,
+         Family = Social.support,
+         Health_Life_Expectancy = Healthy.life.expectancy,
+         Freedom = Freedom.to.make.life.choices,
+         Trust_Government_Corruption = Perceptions.of.corruption,
+         Generosity_d = Generosity)%>%
+  add_column('Year' = 2018)
+
+data_2019 <- data_2019 %>%
+  rename(Country = Country.or.region,
+         Happiness_Rank = Overall.rank,
+         Happiness_Score = Score,
+         Economy_GDP_per_Capita = GDP.per.capita,
+         Family = Social.support,
+         Health_Life_Expectancy = Healthy.life.expectancy,
+         Freedom = Freedom.to.make.life.choices,
+         Trust_Government_Corruption = Perceptions.of.corruption,
+         Generosity_d = Generosity)%>%
+  add_column('Year' = 2019)
+
+data_2020 <- data_2020 %>%
+  rename(Country = "Country.name",
+         Region = "Regional.indicator",
+         #Happiness_Rank = "Ladder.score",
+         Happiness_Score = "Ladder.score",
+         Lower_Confidence_Interval = "lowerwhisker",
+         Upper_Confidence_Interval = "upperwhisker",
+         Economy_GDP_per_Capita = "Explained.by..Log.GDP.per.capita",
+         Family = "Explained.by..Social.support",
+         Health_Life_Expectancy = "Explained.by..Healthy.life.expectancy",
+         Freedom = "Explained.by..Freedom.to.make.life.choices",
+         Trust_Government_Corruption = "Explained.by..Perceptions.of.corruption",
+         Dystopia_Residual="Dystopia...residual",
+         Generosity_d = "Explained.by..Generosity")%>%
+  add_column('Year' = 2020)
+  
+
+```
+
+When we compared the columns in our dataset we identified that the columns needed for our analysis are: "Happiness_Score", "Lower_Confidence_Interval","Upper_Confidence_Interval","Economy_GDP_per_Capita,"Family","Health_Life_Expectancy," "Freedom," "Trust_Government_Corruption," "Generosity_d," "Dystopia_Residual" which are of non-numeric datatypes, therefore converting the same to numeric datatypes.
+
+```{r}
+# converting data into numeric values
+
+# For Year 2016
+cols <- c("Happiness_Rank", "Happiness_Score", "Lower_Confidence_Interval",
+          "Upper_Confidence_Interval", "Economy_GDP_per_Capita", "Family",
+          "Health_Life_Expectancy", "Freedom", "Trust_Government_Corruption",
+          "Generosity_d", "Dystopia_Residual")
+
+for (col in cols) {
+  data_2016[[col]] <- as.numeric(data_2016[[col]])
+}
+
+# For Year 2017
+cols <- c("Happiness_Rank", "Happiness_Score", "Lower_Confidence_Interval",
+          "Upper_Confidence_Interval", "Economy_GDP_per_Capita", "Family",
+          "Health_Life_Expectancy", "Freedom", "Trust_Government_Corruption",
+          "Generosity_d", "Dystopia_Residual")
+
+for (col in cols) {
+  data_2017[[col]] <- as.numeric(data_2017[[col]])
+}
+
+# For Year 2018
+cols_2018 <- c("Happiness_Rank", "Happiness_Score", "Economy_GDP_per_Capita", "Family",
+                "Health_Life_Expectancy", "Freedom", "Trust_Government_Corruption", "Generosity_d")
+for (col in cols_2018) {
+  data_2018[[col]] <- as.numeric(data_2018[[col]])
+}
+
+# For Year 2019:
+cols_2019 <- c("Happiness_Rank", "Happiness_Score", "Economy_GDP_per_Capita", "Family",
+                "Health_Life_Expectancy", "Freedom", "Trust_Government_Corruption", "Generosity_d")
+for (col in cols_2019) {
+  data_2019[[col]] <- as.numeric(data_2019[[col]])
+}
+
+# For Year 2020
+cols_2020 <- c("Happiness_Score", "Lower_Confidence_Interval",
+                "Upper_Confidence_Interval", "Economy_GDP_per_Capita", "Family",
+                "Health_Life_Expectancy", "Freedom", "Trust_Government_Corruption", "Dystopia_Residual", "Generosity_d")
+for (col in cols_2020) {
+  data_2020[[col]] <- as.numeric(data_2020[[col]])
+}
+```
+
+```{r}
+length(unique(data_2016$Country))
+length(unique(data_2017$Country))
+length(unique(data_2018$Country))
+length(unique(data_2019$Country))
+length(unique(data_2020$Country))
+```
+
+There is a slight difference in number of countries but this has no particular impact on the analysis that we are conducting, thus we would continue with the same
+
+**Some more data wrangling:**
+
+Merging all the data sets into one:
+
+```{r}
+# Merge the data frames
+data_merged <- bind_rows(data_2016, data_2017, data_2018, data_2019, data_2020)
+head(data_merged, 3)
+tail(data_merged, 3)
+```
+
+We also changed the country names to maintain consistency
+
+```{r}
+# unique_countries <- unique(data_merged$Country)
+# print(unique_countries)
+data_merged$Country[data_merged$Country=="Macedonia"]<-"N.Macedonia"
+data_merged$Country[data_merged$Country=="North Macedonia"]<-"N.Macedonia"
+data_merged$Country[data_merged$Country=="Northern Cyprus"]<-"N.Cyprus"
+data_merged$Country[data_merged$Country=="North Cyprus"]<-"N.Cyprus"
+data_merged$Country[data_merged$Country=="Hong Kong S.A.R., China"]<-"Hong Kong"
+data_merged$Country[data_merged$Country=="Hong Kong S.A.R. China"]<-"Hong Kong"
+data_merged$Country[data_merged$Country=="Taiwan Province of China"]<-"Taiwan"
+data_merged$Country[data_merged$Country=="Trinidad & Tobago"]<-"Trinidad and Tobago"
+data_merged$Country[data_merged$Country=="Somaliland region"]<-"Somaliland Region"
+```
+
+```{r}
+data_merged <- arrange(data_merged,Country)
+```
+
+We considered the columns required for our data analysis and dropped the rest of the columns.
+
+```{r}
+happiness_df <- select(data_merged, Country, Region, Happiness_Score, Lower_Confidence_Interval,
+                Upper_Confidence_Interval, Economy_GDP_per_Capita, Family,
+                Health_Life_Expectancy, Freedom, Trust_Government_Corruption, Dystopia_Residual, Generosity_d, Year)
+```
+
+Checking for duplicate values in our dataset after merging:
+
+```{r}
+# Checking for duplication in the dataset
+sum(duplicated(happiness_df))
+```
+
+Checking for missing values in our dataset after merging:
+
+```{r}
+# Checking for missing values in the merged data frame
+sum(is.na(happiness_df))
+```
+
+Replacing missing values with column means is a common method of handling missing data in a dataset.
+
+There are several reasons why it is important to replace missing values:
+
+-   To Avoid bias: Missing data can cause bias in the analysis of the data.
+    If missing data is not handled properly, it can lead to incorrect conclusions or biased results.
+
+-   To Maintain sample size: Replacing missing values with column means allows you to maintain the sample size of the dataset.
+    If missing data is simply removed, it can reduce the sample size, which can affect the validity and generalizability of the analysis.
+
+-   To Increase accuracy: Replacing missing values with column means can increase the accuracy of the analysis.
+    By filling in missing data with column means, you can reduce the amount of uncertainty and improve the overall quality of the data.
+
+```{r}
+# Replace missing values with column means
+happiness_df <- happiness_df %>% 
+  mutate_if(is.numeric, ~ifelse(is.na(.), mean(., na.rm = TRUE), .))
+
+# Print the result
+tail(happiness_df)
+
+```
+
+```{r}
+happiness_df <- within(happiness_df, Region[Region == 'North America and ANZ'] <- 'North America')
+unique_regions <- unique(happiness_df$Region)
+print(unique_regions)
+```
+
+As observed above, some regions are inconsistent and missing in the dataset. So we identified and renamed the region names to maintain consistency.
+
+```{r}
+happiness_df <- within(happiness_df, Region[Region == 'South Asia'] <- 'Southern Asia')
+happiness_df <- within(happiness_df, Region[Region == 'Southeast Asia'] <- 'Southeastern Asia')
+happiness_df <- within(happiness_df, Region[Region == 'East Asia'] <- 'Eastern Asia')
+happiness_df <- within(happiness_df, Region[Region == 'Middle East and North Africa'] <- 'Middle East and Northern Africa')
+
+```
+
+We also identified the countries with missing regions and replaced the same.
+
+```{r}
+countries_with_na_region <- happiness_df %>% filter(is.na(Region))
+print(countries_with_na_region$Country)
+
+# create a list of country-region pairs
+region_updates <- list(
+  "Central African Republic" = "Sub-Saharan Africa",
+  "Gambia" = "Sub-Saharan Africa",
+  "Lesotho" = "Southern Africa",
+  "Hong Kong" = "Eastern Asia",
+  "Mozambique" = "Sub-Saharan Africa",
+  "N.Cyprus" = "Middle East and Northern Africa",
+  "N.Macedonia" = "Central and Eastern Europe",
+  "Swaziland" = "Sub-Saharan Africa",
+  "Taiwan" = "Eastern Asia",
+  "Trinidad and Tobago" = "Latin America and Caribbean"
+)
+
+# update the regions in the happiness_df
+happiness_df <- happiness_df %>%
+  mutate(
+    Region = ifelse(Country %in% names(region_updates), 
+                    unlist(region_updates[Country]), 
+                    Region)
+  )
+
+countries_with_na_region <- happiness_df %>% filter(is.na(Region))
+print(countries_with_na_region$Country)
+
+# happiness_df <- within(happiness_df, Region[Region == 'North America and ANZ'] <- 'North America')
+# unique_regions <- unique(happiness_df$Region)
+# print(unique_regions)
+```
+
+After performing all the steps above we checked for missing values again:
+
+```{r}
+# Check for missing values in the merged data frame
+sum(is.na(happiness_df))
+# Create a logical matrix indicating missing values
+missing_values <- is.na(happiness_df)
+# Find row and column indices where missing values occur
+missing_indices <- which(missing_values, arr.ind = TRUE)
+# Print the result
+head(missing_indices)
+tail(missing_indices)
+```
+
+There are no missing columns This completes our Data cleaning and wrangling.
+
+#### Exploratory Data Analysis:
+
+```{r}
+describe(happiness_df)
+options(scipen=999)
+```
+
+```{r}
+favstats(happiness_df$Happiness_Score)
+```
+
+### DESCRIPTIVE DATA ANALYSIS:
+
+We will conduct some descriptive analysis, which includes determining the mean, median, and standard deviation of happiness scores for each year, and presenting the trends in a line graph.
+Additionally, we will examine the skewness and kurtosis of the distribution of happiness scores.
+
+```{r}
+#Calculating the mean, median, and standard deviation of happiness scores by year:
+data_summary <- happiness_df %>%
+  group_by(Year) %>%
+  summarise(mean_happiness = mean(Happiness_Score),
+            median_happiness = median(Happiness_Score),
+            sd_happiness = sd(Happiness_Score))
+
+print(data_summary)
+mfv(happiness_df$Happiness_Score)
+
+# Skewness and kurtosis of happiness scores
+skewness(happiness_df$Happiness_Score)
+kurtosis(happiness_df$Happiness_Score)
+
+# Plotting Mean and Median of Happiness Score over time
+ggplot(data_summary, aes(x = Year, y = mean_happiness, color = "Mean")) +
+  geom_line() +
+  geom_line(aes(y = median_happiness, color = "Median")) +
+  scale_color_manual(values = c("red", "blue")) +
+  ggtitle("Happiness Scores by Year") +
+  xlab("Year") +
+  ylab("Happiness Score") +
+  labs(color = "Summary Statistic")
+  
+```
+
+The table above shows the mean, median, and standard deviation of happiness scores for each year from 2016 to 2020.
+The mean happiness score has increased gradually over the years, from 5.382 in 2016 to 5.473 in 2020.
+The median happiness score has also increased over time, from 5.314 in 2016 to 5.515 in 2020.
+The standard deviation of happiness scores has remained relatively constant over the years, ranging from 1.113 to 1.142.
+The skewness value of -0.005109459 means that the World Happiness report dataset is almost symmetrical, with a slight bump on the left side of the distribution.
+This suggests that the average happiness score (mean) and the middle score (median) are probably very similar.
+The kurtosis value of -0.7129779 means that the distribution of happiness scores is a bit flatter than a "normal" distribution (i.e., a bell-shaped curve).
+This indicates that there are fewer very high or very low happiness scores in the dataset, which results in thinner tails of the distribution.
+
+These findings give us a clear understanding of the overall trend in happiness scores over time.
+
+#### A histogram of the distribution of Happiness_Score.
+
+```{r}
+mean_Dystopia_Residual=mean(happiness_df$Dystopia_Residual)
+ggplot(happiness_df, aes(x = Happiness_Score)) +
+  geom_histogram(color = "darkgreen", fill = "lightgreen", binwidth = 0.5, ) +
+  xlab("Happiness Score") +
+  ylab("Frequency") +
+  geom_vline(xintercept = mean_Dystopia_Residual, linetype = "dashed", color = "black")
+  ggtitle("Distribution of Happiness Score")
+```
+
+#### Visualizing a boxplot of the relationship between Region and Happiness_Score
+
+```{r}
+# Plot the relationship between Region and Happiness_Score
+ggplot(happiness_df, aes(x = Region, y = Happiness_Score)) +
+  geom_boxplot(aes(fill=Region), color = "black", alpha = 0.5) +
+  xlab("Region") +
+  ylab("Happiness Score") +
+  ggtitle("Relationship between Region and Happiness Score") +coord_flip()
+
+# Computing descriptive statistics by groups
+
+happiness_table <- desc_statby(happiness_df, measure.var = "Happiness_Score",
+                      grps = "Region")
+happiness_table <- happiness_table[, c("Region","mean","median")]
+names(happiness_table) <- c("Region", "Mean of happiness score","Median of happiness score")
+# Summary table plot
+happiness_table_viz <- ggtexttable(happiness_table,rows = NULL, 
+                         theme = ttheme("classic"))
+happiness_table_viz
+```
+
+According to the box plot, we can observe that the Australia and New Zealand region has the highest median happiness score.
+Central and Eastern Europe, as well as North America, rank second in terms of median happiness score.
+Sub-Saharan Africa has the second lowest median, after Southern Asia.
+The box plot shows the range of happiness scores for various regions and also the distribution of happiness scores.
+
+#### Continuing Exploratory Data Analysis
+
+**Finding what are the top 20 happiest countries from 2015-2020:**
+
+```{r}
+happiness_df %>%
+  group_by(Country) %>%
+  summarise(Happiness_Score = mean(Happiness_Score)) %>%
+  arrange(desc(Happiness_Score)) %>%
+  top_n(20, Happiness_Score) %>%
+  ggplot(aes(x = reorder(Country, Happiness_Score), y = Happiness_Score, fill = Happiness_Score)) +
+  geom_bar(stat = "identity") +
+  scale_fill_viridis(option = "D") +
+  xlab("Country Name") +
+  ylab("Happiness Score") +
+  ggtitle("Top 20 Happiest Countries") +
+  coord_flip() +
+  theme_light() +
+  theme(plot.title = element_text(face = "bold", hjust = 0.5), legend.title = element_blank())
+```
+
+#### Observations:
+
+The visualization presents a bar chart of the top 20 countries, with their respective mean happiness scores.
+Finland, Denmark, and Norway are the top three happiest countries, with mean happiness scores above 7.5.
+The other countries in the top 20 have mean happiness scores ranging from approximately 7.0 to 7.5.
+
+**Year wise happiness score - top 20 countries**
+
+```{r}
+# Top 20 countries with highest happiness score
+data_2016 %>% 
+  top_n(20,Happiness_Score) %>%
+  mutate(Country=reorder(Country,Happiness_Score))%>%
+  ggplot(aes(x=Country,y=Happiness_Score,fill=Happiness_Score))+
+  geom_bar(stat = "identity")+
+  scale_fill_viridis(option = "D")+
+  xlab("Happiness Score")+
+  ylab("Country Name")+
+  ggtitle("Top 20 Happiest Countries in 2016")+
+  coord_flip()+
+  theme_light()+
+  theme(plot.title = element_text(face="bold",hjust = 0.5),legend.title = element_blank())
+```
+
+```{r}
+data_2017 %>% 
+  top_n(20,Happiness_Score) %>%
+  mutate(Country=reorder(Country,Happiness_Score))%>%
+  ggplot(aes(x=Country,y=Happiness_Score,fill=Happiness_Score))+
+  geom_bar(stat = "identity")+
+  scale_fill_viridis(option = "D")+
+  xlab("Happiness Score")+
+  ylab("Country Name")+
+  ggtitle("Top 20 Happiest Countries in 2017")+
+  coord_flip()+
+  theme_light()+
+  theme(plot.title = element_text(face="bold",hjust = 0.5),legend.title = element_blank())
+```
+
+```{r}
+data_2018 %>% 
+  top_n(20,Happiness_Score) %>%
+  mutate(Country=reorder(Country,Happiness_Score))%>%
+  ggplot(aes(x=Country,y=Happiness_Score,fill=Happiness_Score))+
+  geom_bar(stat = "identity")+
+  scale_fill_viridis(option = "D")+
+  xlab("Happiness Score")+
+  ylab("Country Name")+
+  ggtitle("Top 20 Happiest Countries in 2018")+
+  coord_flip()+
+  theme_light()+
+  theme(plot.title = element_text(face="bold",hjust = 0.5),legend.title = element_blank())
+```
+
+```{r}
+data_2019 %>% 
+  top_n(20,Happiness_Score) %>%
+  mutate(Country=reorder(Country,Happiness_Score))%>%
+  ggplot(aes(x=Country,y=Happiness_Score,fill=Happiness_Score))+
+  geom_bar(stat = "identity")+
+  scale_fill_viridis(option = "D")+
+  xlab("Happiness Score")+
+  ylab("Country Name")+
+  ggtitle("Top 20 Happiest Countries in 2019")+
+  coord_flip()+
+  theme_light()+
+  theme(plot.title = element_text(face="bold",hjust = 0.5),legend.title = element_blank())
+```
+
+```{r}
+data_2020 %>% 
+  top_n(20,Happiness_Score) %>%
+  mutate(Country=reorder(Country,Happiness_Score))%>%
+  ggplot(aes(x=Country,y=Happiness_Score,fill=Happiness_Score))+
+  geom_bar(stat = "identity")+
+  scale_fill_viridis(option = "D")+
+  xlab("Happiness Score")+
+  ylab("Country Name")+
+  ggtitle("Top 20 Happiest Countries in 2020")+
+  coord_flip()+
+  theme_light()+
+  theme(plot.title = element_text(face="bold",hjust = 0.5),legend.title = element_blank())
+```
+
+### STATISTICAL ANALYSIS OF GUIDING QUESTION:
+
+### Question 1: To analyze the trends in happiness scores across countries over time
+
+**Null hypothesis, H0:** There is no significant difference in the mean happiness scores between different years.
+
+**Alternative hypothesis, Ha:** There is a significant difference in the mean happiness scores between different years.
+Let's assume alpha = 0.05.
+
+```{r}
+ggqqplot(happiness_df$Happiness_Score)
+```
+
+As observed, the happiness score distribution does not follow normal distribution we will be conducting bootstrap analysis to normalise the mean_happiness_score.
+
+Since we want to compare the means of two groups (i.e., happiness scores in different years), we are taking a sample of 2019 and 2020 and running bootstrap of mean difference for the same.
+
+```{r}
+# Create a function to calculate the difference in means
+mean_diff <- function(data, indices) {
+  d <- data[indices, ]
+  mean_2019 <- mean(d$Happiness_Score[d$Year == 2019])
+  mean_2020 <- mean(d$Happiness_Score[d$Year == 2020])
+  mean_diff <- mean_2019 - mean_2020
+  return(mean_diff)
+}
+
+# Set the seed for reproducibility
+#set.seed(123)
+
+# Perform the bootstrap with 1000 replicates
+boot_mean_diff <- boot(happiness_df, mean_diff, R = 1000, strata = happiness_df$Year)
+hist(boot_mean_diff)
+# Calculate the bootstrap confidence interval
+boot_ci <- boot.ci(boot_mean_diff, type = "bca")
+
+# Print the bootstrap results
+print(boot_mean_diff)
+print(boot_ci)
+```
+
+The output shows the result of the bootstrap analysis with 1000 replicates, which estimates the difference in means between the years 2019 and 2020 for the happiness score variable.
+
+The original difference in means is 0.06614371, and the bias and standard error are also reported.
+The bootstrap confidence interval calculated using the bias-corrected and accelerated (BCa) method is (-0.3134, 0.1904) at the 95% level.
+
+This means we can be 95% confident that the true population difference in means lies within this interval.
+Since the interval includes both negative and positive values, **we cannot conclude that there is a significant difference in means between the two years.**
+
+**Conducting t.test for the mean.happiness scores:**  
+Now to calculate the the test statistic and p-value.
+
+Since we want to compare the means of two groups (i.e., happiness scores in different years), we can use a two-sample t-test.
+
+```{r}
+happiness_subset <- subset(happiness_df, Year %in% c(2019, 2020))
+# Perform t-test
+t.test(Happiness_Score ~ Year, data = happiness_subset)
+#to perform a two-sample t-test to compare the mean happiness scores in 2019 and 2020:
+# t.test(Happiness_Score ~ Year, data = happiness_df, subset=happiness_df$Year %in% c(2019, 2020))
+p_value=t.test(Happiness_Score ~ Year, data = happiness_subset)$p.value
+if (p_value < 0.05) {
+cat("The significance level (i.e., p-value < alpha), we reject the null hypothesis and conclude that there is a significant difference in the mean happiness scores between different years.")
+} else {
+cat("The p-value is greater than the significance level (i.e., p-value >= alpha), we fail to reject the null hypothesis and conclude that there is no significant difference in the mean happiness scores between different years.
+")
+}
+
+```
+
+**Inference from bootstrap and t.test:**
+
+Bootstrap confidence interval (-0.3134, 0.1904) and t.test confidence interval :(-0.3152645 0.1829771) are close.
+The results of the bootstrap confidence interval and the t-test confidence interval are similar and overlap.
+This suggests that there is no significant difference in the mean happiness scores between 2019 and 2020, The confidence intervals also provide a range of values within which the true difference in mean happiness scores between 2019 and 2020 is likely to fall with 95% confidence.
+
+The bootstrap confidence interval is estimated using a resampling method and the t-test confidence interval is estimated using a theoretical distribution.
+**Both methods suggest that the difference in mean happiness scores between 2019 and 2020 is not statistically significant.**
+
+#### **Further checking the same for more than 2 years:**
+
+To test the difference in mean happiness scores between more than two years using ANOVA, we can follow these steps:
+
+#### Conducting an ANOVA test on the happiness scores by year
+
+```{r}
+model <- aov(Happiness_Score ~ Year, data = happiness_df)
+anova_result <- anova(model)
+anova_result
+
+```
+
+-   The Year row has two degrees of freedom (df) because there are two groups (years) being compared.
+
+-   The SS(Sum of Squares) for Year is 0.85, which is the amount of variation in Happiness_Score that can be explained by the Year variable.
+
+-   The Mean Square is calculated by dividing the Sum of Squares by the degrees of freedom, which is 0.8462.
+    The F-statistic is calculated by dividing the Mean Square for Year by the residual Mean Square, which is a measure of the unexplained variation in Happiness_Score.
+
+-   The F-value for Year is 0.672, which is relatively small, **which suggests that the differences in mean happiness scores between years are not very large.**
+
+#### **Answering Question 1:**
+
+The p-value for the Year effect is 0.412, which is greater than the conventional significance level of 0.05.
+
+This means that there is not enough evidence to reject the null hypothesis that there is no significant difference in the mean happiness scores between the two years being compared.
+Therefore there is no significant difference in the mean happiness score across years.
+
+### Question 2: Compare the mean happiness scores between developed vs. developing regions, and test whether the differences are statistically significant.
+
+**Null Hypothesis, H0:** There is no difference in mean happiness scores between developed vs. developing regions.
+
+**Alternate Hypothesis, Ha:** There is a difference in mean happiness scores between developed vs. developing regions.
+
+```{r}
+# Filtering the developed and developing regions by data shared in source: https://blogs.worldbank.org/opendata/new-world-bank-country-classifications-income-level-2022-2023
+
+# Filtering the data into developed and developing countries
+
+happiness_df$Region_type <- ifelse(happiness_df$Region %in% c("Western Europe", "North America", "Australia and New Zealand", "Eastern Asia", "Central and Eastern Europe"), "Developed", "Developing")
+
+developed_df <- subset(happiness_df, Region_type == "Developed")
+developing_df <- subset(happiness_df, Region_type == "Developing")
+
+# Checking for normalcy
+ggqqplot(developed_df$Happiness_Score)
+ggqqplot(developing_df$Happiness_Score)
+
+# Since the distribution does not follow normalcy, we will be using bootstrap analysis:
+# Calculating the observed difference in mean happiness scores between developed and developing countries
+obs_diff <- mean(developed_df$Happiness_Score) - mean(developing_df$Happiness_Score)
+
+# Setting the number of bootstrap samples to generate
+n_boot <- 1000
+
+# Initializing an empty vector to store the bootstrap samples
+boot_diffs <- rep(0, n_boot)
+
+# Generating the bootstrap samples and calculate the difference in means for each sample
+for (i in 1:n_boot) {
+  boot_developed <- sample(developed_df$Happiness_Score, replace = TRUE)
+  boot_developing <- sample(developing_df$Happiness_Score, replace = TRUE)
+  boot_diffs[i] <- mean(boot_developed) - mean(boot_developing)
+}
+
+hist(boot_diffs)
+# Calculating the bootstrap estimate of the standard error
+se_boot <- sd(boot_diffs)
+
+# Calculating the bootstrap confidence interval
+alpha <- 0.05
+lower_ci <- obs_diff - quantile(boot_diffs, 1 - alpha/2) * se_boot
+upper_ci <- obs_diff - quantile(boot_diffs, alpha/2) * se_boot
+
+# Printing the results
+cat("Observed difference in means:", obs_diff, "\n")
+cat("Bootstrap estimate of standard error:", se_boot, "\n")
+cat("95% Bootstrap confidence interval:", lower_ci, upper_ci)
+
+#Now conducting t-statistic:
+#t = (observed difference in means) / (bootstrap estimate of standard error) 
+t_statistic= obs_diff/se_boot
+cat("t-statistic : ",t_statistic)
+
+n1 <- 285
+n2 <- 492
+df=n1+n2-2
+pvalue <- 2 * (1 - pt(abs(t_statistic), df))
+pvalue
+# Determining if the result is statistically significant based on the p-value
+if (pvalue < 0.05) {
+  cat("\n The result is statistically significant (p < 0.05)")
+} else {
+  cat("\n The result is not statistically significant (p >= 0.05)")
+}
+
+```
+
+#### **Answering Question 2:**
+
+Based on the observed difference in means of 1.024189 and the bootstrap estimate of the standard error of 0.07387027, we can calculate a t-statistic as:
+
+t_statistic: 13.86478
+
+This t-statistic indicates a very large difference between the means of the developed and developing regions, and is highly unlikely to have occurred by chance alone.
+To further support this conclusion, we can calculate a bootstrap confidence interval for the difference in means.
+The 95% confidence interval is (0.9377901, 0.9591427), which does not include 0.
+This indicates that the difference in means is statistically significant and the p-value is less than 0.001, indicating that the difference in means is statistically significant at the 0.05 significance level.
+**Therefore, we can reject the null hypothesis and conclude that there is a statistically significant difference in mean happiness scores between developed and developing regions, with developed regions having higher mean happiness scores than developing regions.**
+
+### Question 3 : To analyze the impact of Economic factors on the happiness scores across countries over time
+
+**Null Hypothesis, H0:** Economic factors such as GDP, Health_Life_Expectancy, Family does not impact happiness_score
+
+**Alternate Hypothesis, Ha:** Economic factors such as GDP, Health_Life_Expectancy, Family impacts happiness
+
+**First we visualize the relation between all the factor against the happiness score by region using scatter plot.**
+
+```{r}
+# Plot the relationship between Health_Life_Expectancy and Happiness_Score
+ggscatter(happiness_df, x = "Health_Life_Expectancy", y = "Happiness_Score", color = "Region", palette = "jco",
+          size = 3, alpha = 0.6) +
+  ggtitle("Health Life Expectancy vs. Happiness Score by Region") +
+  xlab("Health Life Expectancy") +
+  ylab("Happiness Score")
+
+# Save the plot with a larger size
+ggsave("myplot1.png", width = 8, height = 6, dpi = 300)
+
+
+ggscatter(happiness_df, x = "Generosity_d", y = "Happiness_Score", color = "Region", palette = "jco",
+          size = 3, alpha = 0.6) +
+  ggtitle("Generosity vs. Happiness Score by Region") +
+  xlab("Generosity") +
+  ylab("Happiness Score")
+
+# Save the plot with a larger size
+ggsave("myplot2.png", width = 8, height = 6, dpi = 300)
+
+ggscatter(happiness_df, x = "Family", y = "Happiness_Score", color = "Region", palette = "jco",
+          size = 3, alpha = 0.6) +
+  ggtitle("Family vs. Happiness Score by Region") +
+  xlab("Family") +
+  ylab("Happiness Score")
+
+# Save the plot with a larger size
+ggsave("myplot3.png", width = 8, height = 6, dpi = 300)
+
+ggscatter(happiness_df, x = "Economy_GDP_per_Capita", y = "Happiness_Score", color = "Region", palette = "jco",
+          size = 3, alpha = 0.6) +
+  ggtitle("Economy_GDP_per_Capita vs. Happiness Score by Region") +
+  xlab("Economy_GDP_per_Capita") +
+  ylab("Happiness Score")
+
+# Save the plot with a larger size
+ggsave("myplot4.png", width = 8, height = 6, dpi = 300)
+
+ggscatter(happiness_df, x = "Freedom", y = "Happiness_Score", color = "Region", palette = "jco",
+          size = 3, alpha = 0.6) +
+  ggtitle("Freedom vs. Happiness Score by Region") +
+  xlab("Freedom") +
+  ylab("Happiness Score")
+
+# Save the plot with a larger size
+ggsave("myplot5.png", width = 8, height = 6, dpi = 300)
+
+
+ggscatter(happiness_df, x = "Trust_Government_Corruption", y = "Happiness_Score", color = "Region", palette = "jco",
+          size = 3, alpha = 0.6) +
+  ggtitle("Trust_Government_Corruption vs. Happiness Score by Region") +
+  xlab("Trust_Government_Corruption") +
+  ylab("Happiness Score")
+
+# Save the plot with a larger size
+ggsave("myplot6.png", width = 8, height = 6, dpi = 300)
+
+```
+
+**Observations:** As seen in the scatter plots above most of the factors have a linear relationship with the happiness score.
+
+Now to verify how economic factors such as GDP, Family or Social support and Life expectancy, impact happiness over time:
+
+```{r}
+
+# Creating a linear regression model for GDP, 
+model_gdp <- lm(Happiness_Score ~ Economy_GDP_per_Capita, data = happiness_df)
+summary(model_gdp)
+
+# Creating a linear regression model for Health_Life_Expectancy, 
+model_health <- lm(Happiness_Score ~ Health_Life_Expectancy, data = happiness_df)
+summary(model_health)
+
+# Creating a linear regression model for Family, 
+model_family <- lm(Happiness_Score ~ Family, data = happiness_df)
+summary(model_family)
+
+```
+
+We fitted three linear regression models to investigate the relationship between happiness score and various predictor variables.
+The response variable in all three models is the happiness score.
+The predictor variables are GDP per capita, health/life expectancy, and family.
+
+For the GDP per capita model, the coefficient for GDP per capita is 2.20143, with a standard error of 0.06201 and a t-value of 35.50.
+This means that, holding all other variables constant, a one unit increase in GDP per capita is associated with a 2.20143 unit increase in happiness score.
+The p-value for this coefficient is less than 0.00000000000000022, which means that it is statistically significant at the 0.05 level.
+The R-squared value is 0.6192, which means that 61.92% of the variation in happiness scores can be explained by GDP per capita.
+
+For the health/life expectancy model, the coefficient for Health/Life Expectancy is 3.33784, with a standard error of 0.10592 and a t-value of 31.51.
+This means that, holding all other variables constant, a one unit increase in Health/Life Expectancy is associated with a 3.33784 unit increase in happiness score.
+The p-value for this coefficient is less than 0.00000000000000022, which means that it is statistically significant at the 0.05 level.
+The R-squared value is 0.5617, which means that 56.17% of the variation in happiness scores can be explained by Health/Life Expectancy.
+
+For the family model, the coefficient for Family is 2.24368, with a standard error of 0.09166 and a t-value of 24.48.
+This means that, holding all other variables constant, a one unit increase in Family is associated with a 2.24368 unit increase in happiness score.
+The p-value for this coefficient is less than 0.00000000000000022, which means that it is statistically significant at the 0.05 level.
+The R-squared value is 0.436, which means that 43.6% of the variation in happiness scores can be explained by Family.
+
+Overall, all three variables are significant predictors of happiness scores, and each of them has a positive relationship with happiness scores.
+GDP per capita has the highest R-squared value among the three, indicating that it explains more variation in happiness scores than the other two variables.
+However, all three variables have relatively high R-squared values, suggesting that they are all important predictors of happiness.
+
+**To compare the linear regression models based on the adjusted R-squared values, we extract the adjusted R-squared values from the regression output and compare them:**
+
+```{r}
+# Using R-squared method to compare the three models
+adj_r_squared <- c(summary(model_gdp)$adj.r.squared,
+                   summary(model_health)$adj.r.squared,
+                   summary(model_family)$adj.r.squared)
+
+# Compare adjusted R-squared values
+adj_r_squared
+
+# Visualize adjusted R-squared values
+barplot(adj_r_squared, names.arg = c("GDP", "Life Expectancy", "Family"),
+        xlab = "Predictor Variable", ylab = "Adjusted R-Squared")
+
+```
+
+#### **Answering Question 3:**
+
+Based on the adjusted R-squared values, the model with GDP as the independent variable has the highest explanatory power (adjusted R-squared = 0.6187), followed by the model with health life expectancy (adjusted R-squared = 0.5611), and then the model with family (adjusted R-squared = 0.4353).
+This suggests that economic factors, particularly GDP, may have a stronger impact on happiness than health life expectancy and family factors during the sampled duration (2016-2020), **proving our alternate hypothesis to be valid.**
+
+Furthermore, the model's performance evaluation metrics MSE, MAE, and R-squared show that the model's predictions are reasonably accurate and explain a significant amount of variance in the data.
+
+This suggests that these factors (GDP per capita, Health Life Expectancy, Family or social support) have a significant impact on happiness_score.
+As a result, we can reject the null hypothesis that economic factors do not impact happiness_score, and accept the alternative hypothesis that economic factors such as GDP, Health_Life_Expectancy, and Family have a significant impact on happiness.
+
+#### Checking if our model satisfies the conditions of linear regression:
+
+As part of our linear regression analysis, we need to check if the model satisfies the assumptions of linear regression, including normality of residuals and homoscedasticity.
+
+1.  Normality of residuals can be checked using a QQ-plot of the residuals or a histogram of the residuals. In the QQ-plot, we check if the residuals are normally distributed, i.e., if the points in the plot follow the diagonal line.
+2.  Homoscedasticity can be checked using a residuals vs. fitted values plot. In this plot, we check if the variance of the residuals is constant across the range of fitted values.
+
+```{r}
+
+pred_gdp_HS <- predict(model_gdp, newdata = happiness_df)
+pred_health_HS <- predict(model_health, newdata = happiness_df)
+pred_family_HS <- predict(model_family, newdata = happiness_df)
+
+# Creating a data frame with the residuals
+residuals_df_gdp <- data.frame("Residuals" = model_gdp$residuals, "Fitted" = model_gdp$fitted.values)
+residuals_df_health <- data.frame("Residuals" = model_health$residuals, "Fitted" = model_health$fitted.values)
+residuals_df_family <- data.frame("Residuals" = model_family$residuals, "Fitted" = model_family$fitted.values)
+
+# Creating the residuals plot using ggplot2
+ggplot(residuals_df_gdp, aes(sample = Residuals)) +  stat_qq(col='blue') + stat_qqline(col='red') + ggtitle("Normal Probability Plot of Residuals for Happiness Score by GDP")
+ggplot(residuals_df_health, aes(sample = Residuals)) +  stat_qq(col='blue') + stat_qqline(col='red') + ggtitle("Normal Probability Plot of Residuals Happiness Score by Life Expectancy")
+ggplot(residuals_df_family, aes(sample = Residuals)) +  stat_qq(col='blue') + stat_qqline(col='red') + ggtitle("Normal Probability Plot of Residuals Happiness Score by Family")
+
+# Plotting the residuals using ggplot2
+ggplot(residuals_df_gdp, aes(x = Fitted, y = Residuals)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residual plot for Happiness score by GDP", x = "Fitted values", y = "Residuals")
+
+ggplot(residuals_df_health, aes(x = Fitted, y = Residuals)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residual plot for Happiness score by Health life expectancy", x = "Fitted values", y = "Residuals")
+
+ggplot(residuals_df_family, aes(x = Fitted, y = Residuals)) +
+  geom_point(alpha = 0.6) +
+  geom_hline(yintercept = 0, linetype = "dashed") +
+  labs(title = "Residual plot for Happiness score by Family", x = "Fitted values", y = "Residuals")
+
+```
+
+**Observations:**
+
+The QQPlot shows *normalcy* for residuals of happiness score by Family and GDP Per Capita and does not show *normalcy* of the residuals of Happiness score by Health / Life Expectancy.
+
+The scatter plots for residuals are randomly scattered around the horizontal line, with no noticeable patterns or outliers i.e., which shows *homoscedasticity*.
+
+However, since the residuals for the Health / Life Expectancy, do not meet the assumption of normality, but do meet the assumption of homoscedasticity, this suggests that the linear regression model may not be the best fit for this data.
+However, this does not necessarily mean that the model is completely invalid.
+It is important to note that the our residuals are only one aspect of evaluating a model, and it is important to consider other factors as well, such as the goodness of fit and the predictive accuracy of the model as drawn from previous conculsion seem to support our alternate hypothesis.
+
+## CONCLUSIONS DRAWN:
+
+Based on our analysis, we can draw several conclusions.
+
+-   Firstly, despite the challenges brought about by the COVID-19 pandemic in 2020, the overall happiness score across countries did not show a significant difference compared to the previous years from 2015 to 2019.
+
+-   Secondly, our investigation revealed that developed regions tend to have higher mean happiness scores than developing regions.
+    This highlights the importance of socio-economic factors in promoting happiness and well-being.
+
+-   Furthermore, our linear regression model confirmed that economic factors, such as GDP, health, and family, significantly impact happiness.
+    These results suggest that policymakers and organizations can focus on improving these factors to enhance people's well-being and quality of life.
+
+In summary, our study provides important insights into the trends and factors influencing happiness across different countries.
+These findings can be useful for guiding decision-making and interventions aimed at improving overall happiness and well-being.
+
+#### LIMITATIONS AND FUTURE RECOMMENDATIONS
+
+1.  Although we used data from the World Happiness Report, the dataset only includes information from 156 countries, which may not be representative of all countries in the world.
+    Additionally, the data is limited to the years 2016-2020.
+
+2.  While we found significant correlations between happiness and various socio-economic and environmental factors, our study does not establish any causal relationships between these factors and happiness.
+
+3.  The World Happiness Report data is based on nationally representative samples of individuals in each country, which may not account for cultural or ethnic diversity within each country.
+
+4.  The relationship between happiness and socio-economic and environmental factors may be complex and multifaceted, and may require more advanced statistical techniques beyond linear regression.
+
+    **FUTURE RECOMMENDATIONS:**
+
+    The findings of this study can provide valuable insights for policymakers and organizations that aim to improve people's well-being and quality of life.
+    Further research could investigate the relationship between happiness and other socio-economic and environmental factors, as well as the potential impact of cultural and political factors.
+
+## REFERENCES
+
+1.  Data Source: [**https://www.kaggle.com/datasets/mathurinache/world-happiness-report**](https://www.kaggle.com/datasets/mathurinache/world-happiness-report)
+
+2.  World Happiness Report, [**https://worldhappiness.report/**](https://worldhappiness.report/)
+
+3.  Global Happiness Center, [**https://www.gallup.com/analytics/349487/gallup-global-happiness-center.aspx**](https://www.gallup.com/analytics/349487/gallup-global-happiness-center.aspx){.uri}
+
+4.  World Bank.
+    (2021).
+    World Development Indicators.
+    Retrieved from [**https://databank.worldbank.org/source/world-development-indicators**](https://databank.worldbank.org/source/world-development-indicators)
+
+5.  World Bank.
+    (2022).
+    New World Bank Country Classifications by Income Level: 2022-2023.
+    Retrieved from [**https://blogs.worldbank.org/opendata/new-world-bank-country-classifications-income-level-2022-2023**](https://blogs.worldbank.org/opendata/new-world-bank-country-classifications-income-level-2022-2023)
+
+6.  OECD Better Life Index, [**https://www.oecdbetterlifeindex.org/**](https://www.oecdbetterlifeindex.org/)
+
+7.  Easterlin, R. A.
+    (1974).
+    "Does economic growth improve the human lot? Some empirical evidence".
+    In David, P. A.
+    & Melvin, W. R.
+    (Eds.), Nations and households in economic growth: Essays in honor of Moses Abramovitz.
+    New York: Academic Press.
+
+8.  Diener, E., & Seligman, M. E. P. (2004).
+    Beyond money: Toward an economy of well-being.
+    Psychological Science in the Public Interest, 5(1), 1-31.
+
+9.  Kahneman, D., & Deaton, A.
+    (2010).
+    High income improves evaluation of life but not emotional well-being.
+    Proceedings of the National Academy of Sciences, 107(38), 16489-16493.
+
+10. Helliwell, J. F., Layard, R., & Sachs, J. D.
+    (2019).
+    World Happiness Report 2019.
+    Sustainable Development Solutions Network.
+
+11. Stiglitz, J. E., Sen, A., & Fitoussi, J. P. (2009).
+    Report by the Commission on the Measurement of Economic Performance and Social Progress.
+    Commission on the Measurement of Economic Performance and Social Progress.
