@@ -115,11 +115,11 @@ To access this dataset in R, we read the csv file read.csv() function to read in
 
 ```{r}
 # Importing the data
-data_2016 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2016.csv")
-data_2017 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2017.csv")
-data_2018 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2018.csv")
-data_2019 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2019.csv")
-data_2020 <- read.csv("/Users/monicachandramurthy/Desktop/archive/2020.csv")
+data_2016 <- read.csv("2016.csv")
+data_2017 <- read.csv("2017.csv")
+data_2018 <- read.csv("2018.csv")
+data_2019 <- read.csv("2019.csv")
+data_2020 <- read.csv("2020.csv")
 ```
 
 ```{r}
